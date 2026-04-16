@@ -1,0 +1,15 @@
+{
+    "resource_pack_name": "Heaven Send",
+    "texture_name": "atlas.items",
+    "texture_data": {
+        "heaver_chudnonn_d0va": {
+            "textures": "textures/items/heaver_chudnonn_d0va"
+        },
+        "heaven": {
+            "textures": "textures/items/heaven"
+        },
+        "heaver_chudnonn_d0va_item": {
+            "textures": "textures/items/heaver_chudnonn_d0va_item"
+        }
+    }
+}

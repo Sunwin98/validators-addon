@@ -1,0 +1,20 @@
+{
+    "format_version": "1.10.0",
+    "minecraft:attachable": {
+        "description": {
+            "identifier": "heaver:heaver_chudtrrmdaa_epaw_selector",
+            "materials": {
+                "default": "entity_alphatest"
+            },
+            "textures": {
+                "default": "textures/items/heaver_chudtrrmdaa_epaw_item"
+            },
+            "geometry": {
+                "default": "geometry.air"
+            },
+            "render_controllers": [
+                "controller.render.armor"
+            ]
+        }
+    }
+}

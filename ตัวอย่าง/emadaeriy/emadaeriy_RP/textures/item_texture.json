@@ -1,0 +1,21 @@
+{
+    "resource_pack_name": "Heaven Send",
+    "texture_name": "atlas.items",
+    "texture_data": {
+        "heaven": {
+            "textures": "textures/items/heaven"
+        },
+        "heaver_emadaeriy_lgfv": {
+            "textures": "textures/items/heaver_emadaeriy_lgfv"
+        },
+        "heaver_emadaeriy_lgfv_item": {
+            "textures": "textures/items/heaver_emadaeriy_lgfv_item"
+        },
+        "heaver_chudemadaeriy_5ln5": {
+            "textures": "textures/items/heaver_chudemadaeriy_5ln5"
+        },
+        "heaver_chudemadaeriy_5ln5_item": {
+            "textures": "textures/items/heaver_chudemadaeriy_5ln5_item"
+        }
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "§b§lชุดนอนน§r §7| §fBP",
+        "description": "§l[ชุดนอนน] [สร้างโดย Bright]\n§7Heaven Send ขอบคุณที่ใช้บริการ https://discord.gg/heavensend",
+        "uuid": "0b7c4aa2-9ea6-4d94-9a60-9869e79ca8f7",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            21,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "type": "data",
+            "uuid": "db68fba7-283c-4dc4-9c57-6ed6e136897e",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "type": "script",
+            "language": "javascript",
+            "uuid": "265b9166-fcbe-4e57-9f54-03a3ece86ea4",
+            "entry": "scripts/main.js",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "uuid": "f9db0268-0b63-4d68-a08c-fe3d06a61b89",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "module_name": "@minecraft/server",
+            "version": "1.17.0"
+        }
+    ]
+}

@@ -1,0 +1,59 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "heaver:heaver_emadaeriy_lgfv",
+      "materials": {
+        "default": "armor"
+      },
+      "textures": {
+        "default": "textures/skin/heaver_emadaeriy_lgfv"
+      },
+      "geometry": {
+        "default": "geometry.emadaeriy"
+      },
+      "scripts": {
+        "initialize": [
+          "v.hairYawPhysics = 0;",
+          "v.hairYawVel = 0;",
+          "v.prevHeadYaw = 0;",
+          "v.headPitch = 0;",
+          "v.pitchVel = 0;"
+        ],
+        "pre_animation": [
+          "v.headYawDelta = query.head_y_rotation(0) - v.prevHeadYaw;",
+          "v.headYawDelta = v.headYawDelta > 180 ? v.headYawDelta - 360 : (v.headYawDelta < -180 ? v.headYawDelta + 360 : v.headYawDelta);",
+          "v.headYawDelta = math.clamp(v.headYawDelta, -8.0, 8.0);",
+          "v.hairYawVel = v.hairYawVel + (v.headYawDelta * 0.018);",
+          "v.hairYawVel = v.hairYawVel - (v.hairYawPhysics * 0.015);",
+          "v.hairYawVel = v.hairYawVel * 0.88;",
+          "v.hairYawPhysics = v.hairYawPhysics + v.hairYawVel;",
+          "v.hairYawPhysics = math.clamp(v.hairYawPhysics, -4, 4);",
+          "v.pitchDelta = query.target_x_rotation - v.headPitch;",
+          "v.pitchVel = v.pitchVel + (v.pitchDelta * 0.08);",
+          "v.pitchVel = v.pitchVel * 0.85;",
+          "v.headPitch = v.headPitch + v.pitchVel;",
+          "v.prevHeadYaw = query.head_y_rotation(0);"
+        ],
+        "animate": [
+          "hair_black_wave",
+          "hair_black_yaw",
+          "hair_front_r_yaw",
+          "hair_front_l_yaw"
+        ]
+      },
+      "animations": {
+        "hair_black_wave": "animation.hair_black.wave_physics",
+        "hair_black_yaw": "animation.hair_black.yaw_physics",
+        "hair_front_r_yaw": "animation.hair_front_r.yaw_physics",
+        "hair_front_l_yaw": "animation.hair_front_l.yaw_physics"
+      },
+      "render_controllers": [
+        "controller.render.armor"
+      ],
+      "item": {
+        "heaver:heaver_emadaeriy_lgfv": "q.owner_identifier == 'minecraft:player'"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "§b§lSAN§r §7| §fBP",
+        "description": "§l[SAN] [สร้างโดย Bright]\n§7Heaven Send ขอบคุณที่ใช้บริการ https://discord.gg/heavensend",
+        "uuid": "759e19e5-a44a-494a-a300-7de6005f4907",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            21,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "type": "data",
+            "uuid": "4c1e2201-0ebb-4e2d-88e8-9e23b359c00d",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "type": "script",
+            "language": "javascript",
+            "uuid": "643a6049-cdfc-469c-a176-e58cee2eef33",
+            "entry": "scripts/main.js",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "uuid": "4518137a-83be-415d-ac28-8b3103f11855",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "module_name": "@minecraft/server",
+            "version": "1.17.0"
+        },
+        {
+            "module_name": "@minecraft/server-ui",
+            "version": "1.3.0"
+        }
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "format_version": "1.21.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "heaver:heaver_emadaeriy_lgfv",
+            "menu_category": {
+                "category": "equipment",
+                "group": "heaver:heaver_skins"
+            }
+        },
+        "components": {
+            "minecraft:max_stack_size": 1,
+            "minecraft:icon": "heaver_emadaeriy_lgfv",
+            "minecraft:display_name": {
+                "value": "§b§lเมะดาเรีย"
+            },
+            "minecraft:wearable": {
+                "slot": "slot.armor.legs"
+            }
+        }
+    }
+}

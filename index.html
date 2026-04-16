@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add-on Inspector — Heaven Send</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js" defer></script>
+</head>
+<body>
+    <a href="#results-section" class="skip-link">ข้ามไปยังผลลัพธ์</a>
+    <div class="app">
+        <!-- Background grain -->
+        <div class="bg-grain"></div>
+        <div class="bg-gradient"></div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2.5"/>
+                            <path d="M10 16L14 20L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Add-on Inspector</h1>
+                        <span class="logo-subtitle">Minecraft Bedrock Add-on Validator</span>
+                    </div>
+                </div>
+                <div class="header-badge">
+                    <span>by Heaven Send</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Drop Zone Section -->
+            <section id="drop-section" class="drop-section">
+                <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="ลากไฟล์ Add-on มาวางหรือกด Enter เพื่อเลือกไฟล์">
+                    <div class="drop-zone-content">
+                        <div class="drop-icon">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <path d="M32 8V40M32 40L20 28M32 40L44 28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 44V48C8 52.4183 11.5817 56 16 56H48C52.4183 56 56 52.4183 56 48V44" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h2 class="drop-title">ลากไฟล์ Add-on มาวางที่นี่</h2>
+                        <p class="drop-desc">รองรับไฟล์ <code>.mcaddon</code> <code>.mcpack</code> <code>.zip</code></p>
+                        <div class="drop-divider">
+                            <span>หรือ</span>
+                        </div>
+                        <label class="btn-browse">
+                            <input type="file" id="file-input" accept=".mcaddon,.mcpack,.zip" multiple hidden>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            เลือกไฟล์
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section id="progress-section" class="progress-section hidden">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <div class="spinner"></div>
+                        <span id="progress-text">กำลังแตกไฟล์...</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div id="progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                    <p id="progress-detail" class="progress-detail"></p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section" class="results-section hidden">
+                <!-- Summary Cards -->
+                <div id="summary-cards" class="summary-cards"></div>
+
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <div class="filter-group" role="group" aria-label="ตัวกรองปัญหา">
+                        <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                        <button class="filter-btn" data-filter="error"><svg class="filter-dot" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="var(--color-error)"/></svg> Error</button>
+                        <button class="filter-btn" data-filter="warning"><svg class="filter-dot" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="var(--color-warning)"/></svg> Warning</button>
+                        <button class="filter-btn" data-filter="pass"><svg class="filter-dot" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="var(--color-pass)"/></svg> Pass</button>
+                    </div>
+                    <button id="btn-new-check" class="btn-new-check">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                        </svg>
+                        ตรวจไฟล์ใหม่
+                    </button>
+                </div>
+
+                <!-- Results Content -->
+                <div class="results-layout">
+                    <!-- File Tree -->
+                    <aside id="file-tree" class="file-tree-panel"></aside>
+                    <!-- Editor Workbench -->
+                    <section class="editor-workbench">
+                        <div class="editor-topbar">
+                            <div class="editor-topbar-title">Editor</div>
+                        </div>
+
+                        <div id="editor-tabs" class="editor-tabs"></div>
+
+                        <div id="editor-panel" class="editor-panel">
+                            <div id="editor-empty" class="editor-empty-state">
+                                <div class="editor-empty-badge">VS Code Mode</div>
+                                <h3>เลือกไฟล์จากแถบซ้ายเพื่อดูและแก้ไขโค้ด</h3>
+                                <p>รองรับการเปิดหลายไฟล์พร้อมกัน, syntax highlighting และ preview รูปภาพในหน้าต่างเดียว</p>
+                            </div>
+                            <div id="editor-preview" class="editor-preview hidden"></div>
+                            <div id="editor-container" class="editor-container hidden"></div>
+                        </div>
+                    </section>
+                    <!-- Problems Panel -->
+                    <aside id="problems-panel" class="problems-panel-standalone">
+                        <div class="problems-header">
+                            <div class="problems-title">Problems</div>
+                            <div id="problem-count" class="problem-count">0</div>
+                        </div>
+                        <div id="issue-list" class="issue-list-panel"></div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Add-on Inspector — ตรวจสอบทุกอย่างบนเบราว์เซอร์ ไม่มีการอัปโหลดไฟล์ขึ้นเซิร์ฟเวอร์</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/unzipper.js" defer></script>
+    <script src="js/validators/json-syntax-validator.js" defer></script>
+    <script src="js/validators/manifest-validator.js" defer></script>
+    <script src="js/validators/item-validator.js" defer></script>
+    <script src="js/validators/texture-validator.js" defer></script>
+    <script src="js/validators/model-validator.js" defer></script>
+    <script src="js/validators/animation-validator.js" defer></script>
+    <script src="js/validators/function-validator.js" defer></script>
+    <script src="js/validators/script-validator.js" defer></script>
+    <script src="js/validators/lang-validator.js" defer></script>
+    <script src="js/validators/unused-validator.js" defer></script>
+    <script src="js/editor-manager.js" defer></script>
+    <script src="js/ui-renderer.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+    "format_version": "1.21.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "heaver:heaver_ssl2_qhxu",
+            "menu_category": {
+                "category": "equipment",
+                "group": "heaver:heaver_skins"
+            }
+        },
+        "components": {
+            "minecraft:max_stack_size": 1,
+            "minecraft:icon": "heaver_ssl2_qhxu",
+            "minecraft:display_name": {
+                "value": "§b§lSSL2"
+            },
+            "minecraft:wearable": {
+                "slot": "slot.armor.legs"
+            }
+        }
+    }
+}

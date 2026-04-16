@@ -1,0 +1,23 @@
+{
+    "format_version": "1.10.0",
+    "minecraft:attachable": {
+        "description": {
+            "identifier": "heaver:heaver_chudtrrmdaa_epaw",
+            "materials": {
+                "default": "armor"
+            },
+            "textures": {
+                "default": "textures/skin/heaver_chudtrrmdaa_epaw"
+            },
+            "geometry": {
+                "default": "geometry.chudtrrmdaa_9voq"
+            },
+            "render_controllers": [
+                "controller.render.armor"
+            ],
+            "item": {
+                "heaver:heaver_chudtrrmdaa_epaw": "q.owner_identifier == 'minecraft:player'"
+            }
+        }
+    }
+}
