@@ -36,11 +36,11 @@ const UIRenderer = (() => {
         const errors = issues.filter(issue => issue.severity === 'error');
         const warnings = issues.filter(issue => issue.severity === 'warning');
 
-        const container = document.getElementById('results-section');
-        let banner = container.querySelector('.status-banner');
-        if (banner) banner.remove();
+        const slot = document.getElementById('results-banner-slot');
+        const existingBanner = document.querySelector('.status-banner');
+        if (existingBanner) existingBanner.remove();
 
-        banner = document.createElement('div');
+        const banner = document.createElement('div');
         banner.className = 'status-banner';
 
         if (errors.length > 0) {
@@ -63,7 +63,9 @@ const UIRenderer = (() => {
             `;
         }
 
-        container.insertBefore(banner, container.querySelector('.summary-cards'));
+        if (slot) {
+            slot.replaceChildren(banner);
+        }
     }
 
     function renderSummaryCards(issues) {
