@@ -121,7 +121,9 @@
             window.__addonInspectorState = {
                 packs: allPacks,
                 issues: allIssues,
-                fileTree
+                fileTree,
+                exportBaseName: getExportBaseName(validFiles),
+                sourceFiles: validFiles.map(file => file.name)
             };
 
             UIRenderer.render(allIssues, allPacks, fileTree);
@@ -210,6 +212,14 @@
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function getExportBaseName(files) {
+        if (!Array.isArray(files) || files.length !== 1) {
+            return 'addon-inspector-export';
+        }
+
+        return files[0].name.replace(/\.(mcpack|mcaddon|zip)$/i, '') || 'addon-inspector-export';
     }
 
 })();

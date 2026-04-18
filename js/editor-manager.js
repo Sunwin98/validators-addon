@@ -10,19 +10,23 @@ const EditorManager = (() => {
         monacoReady: null,
         fileResolver: null,
         onActiveFileChange: null,
+        onFileSave: null,
         previewUrls: new Set(),
-        elements: null
+        elements: null,
+        shortcutsBound: false
     };
 
     function init(options = {}) {
         state.fileResolver = options.fileResolver || null;
         state.onActiveFileChange = options.onActiveFileChange || null;
+        state.onFileSave = options.onFileSave || null;
         state.elements = {
             tabs: document.getElementById('editor-tabs'),
             panel: document.getElementById('editor-panel'),
             container: document.getElementById('editor-container'),
             empty: document.getElementById('editor-empty'),
-            preview: document.getElementById('editor-preview')
+            preview: document.getElementById('editor-preview'),
+            saveButton: document.getElementById('editor-save-button')
         };
 
         if (!state.monacoReady) {
@@ -33,6 +37,7 @@ const EditorManager = (() => {
         }
 
         bindTabEvents();
+        bindEditorActions();
         state.initialized = true;
         renderTabs();
         return state.monacoReady;
@@ -71,6 +76,7 @@ const EditorManager = (() => {
             tab.model.onDidChangeContent(() => {
                 tab.modified = tab.model.getValue() !== tab.originalContent;
                 renderTabs();
+                updateSaveButtonState();
             });
         }
 
@@ -101,6 +107,7 @@ const EditorManager = (() => {
         }
 
         renderTabs();
+        updateSaveButtonState();
     }
 
     function focusFile(path, options = {}) {
@@ -121,6 +128,27 @@ const EditorManager = (() => {
 
     function getActivePath() {
         return state.activePath;
+    }
+
+    async function saveActiveFile() {
+        const activeTab = getActiveTab();
+        if (!activeTab || activeTab.previewType === 'image' || !activeTab.modified) {
+            return false;
+        }
+
+        const content = activeTab.model ? activeTab.model.getValue() : activeTab.fallbackValue;
+
+        if (typeof state.onFileSave === 'function') {
+            await state.onFileSave(activeTab.path, content, activeTab);
+        }
+
+        activeTab.originalContent = content;
+        activeTab.fallbackValue = content;
+        activeTab.modified = false;
+
+        renderTabs();
+        updateSaveButtonState();
+        return true;
     }
 
     function showTab(tab, monacoAvailable, options = {}) {
@@ -170,6 +198,8 @@ const EditorManager = (() => {
         if (typeof state.onActiveFileChange === 'function') {
             state.onActiveFileChange(tab.path);
         }
+
+        updateSaveButtonState();
     }
 
     function renderFallbackEditor(tab) {
@@ -240,6 +270,7 @@ const EditorManager = (() => {
 
         if (state.tabs.length === 0) {
             state.elements.tabs.innerHTML = '<div class="editor-tabs-empty">NO OPEN EDITORS</div>';
+            updateSaveButtonState();
             return;
         }
 
@@ -250,6 +281,8 @@ const EditorManager = (() => {
                 <span class="editor-tab-close" data-close-path="${escapeAttribute(tab.path)}">×</span>
             </button>
         `).join('');
+
+        updateSaveButtonState();
     }
 
     function bindTabEvents() {
@@ -282,6 +315,52 @@ const EditorManager = (() => {
         state.elements.tabs.dataset.bound = 'true';
     }
 
+    function bindEditorActions() {
+        if (state.elements?.saveButton && state.elements.saveButton.dataset.bound !== 'true') {
+            state.elements.saveButton.addEventListener('click', () => {
+                void handleSaveRequest();
+            });
+            state.elements.saveButton.dataset.bound = 'true';
+        }
+
+        if (!state.shortcutsBound) {
+            document.addEventListener('keydown', handleEditorShortcuts, true);
+            state.shortcutsBound = true;
+        }
+    }
+
+    async function handleSaveRequest() {
+        const saveButton = state.elements?.saveButton;
+        if (!saveButton || saveButton.disabled) {
+            return false;
+        }
+
+        saveButton.classList.add('is-saving');
+
+        try {
+            return await saveActiveFile();
+        } catch (error) {
+            console.error('Save failed:', error);
+            alert(`บันทึกไฟล์ไม่สำเร็จ: ${error.message}`);
+            return false;
+        } finally {
+            saveButton.classList.remove('is-saving');
+            updateSaveButtonState();
+        }
+    }
+
+    function handleEditorShortcuts(event) {
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
+            const resultsSection = document.getElementById('results-section');
+            if (resultsSection?.classList.contains('hidden')) {
+                return;
+            }
+
+            event.preventDefault();
+            void handleSaveRequest();
+        }
+    }
+
     function showEmptyState() {
         clearPreviewUrls();
         if (!state.elements) return;
@@ -300,6 +379,8 @@ const EditorManager = (() => {
         if (typeof state.onActiveFileChange === 'function') {
             state.onActiveFileChange(null);
         }
+
+        updateSaveButtonState();
     }
 
     function reset() {
@@ -322,6 +403,7 @@ const EditorManager = (() => {
 
         showEmptyState();
         renderTabs();
+        updateSaveButtonState();
     }
 
     function revealLine(lineNumber, column) {
@@ -359,7 +441,27 @@ const EditorManager = (() => {
             wordWrap: 'off'
         });
 
+        state.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+            void handleSaveRequest();
+        });
+
         return true;
+    }
+
+    function updateSaveButtonState() {
+        const saveButton = state.elements?.saveButton;
+        if (!saveButton) return;
+
+        const activeTab = getActiveTab();
+        const canSave = Boolean(activeTab && activeTab.previewType !== 'image' && activeTab.modified);
+
+        saveButton.disabled = !canSave;
+        saveButton.classList.toggle('is-active', canSave);
+        saveButton.setAttribute('aria-disabled', String(!canSave));
+    }
+
+    function getActiveTab() {
+        return state.tabs.find(tab => tab.path === state.activePath) || null;
     }
 
     function loadMonaco() {
@@ -428,6 +530,7 @@ const EditorManager = (() => {
         focusFile,
         getModifiedFiles,
         getActivePath,
+        saveActiveFile,
         reset
     };
 })();

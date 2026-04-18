@@ -131,13 +131,24 @@
                             <button class="filter-btn" data-filter="warning"><svg class="filter-dot" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="var(--color-warning)"/></svg> Warning</button>
                             <button class="filter-btn" data-filter="pass"><svg class="filter-dot" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="var(--color-pass)"/></svg> Pass</button>
                         </div>
-                        <button id="btn-new-check" class="btn-new-check">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="1 4 1 10 7 10"/>
-                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                            </svg>
-                            ตรวจไฟล์ใหม่
-                        </button>
+                        <div class="action-actions">
+                            <button id="btn-new-check" class="btn-new-check" type="button">
+                                <svg class="action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="1 4 1 10 7 10"/>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                                </svg>
+                                <span>ตรวจไฟล์ใหม่</span>
+                            </button>
+                            <button id="btn-export" class="btn-export" type="button" aria-label="ส่งออก Add-on">
+                                <svg class="action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 3v12"/>
+                                    <path d="m7 8 5-5 5 5"/>
+                                    <path d="M20 21H4"/>
+                                    <path d="M18 16v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2"/>
+                                </svg>
+                                <span>ส่งออก</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -151,7 +162,17 @@
                             <div class="editor-topbar-title">Editor</div>
                         </div>
 
-                        <div id="editor-tabs" class="editor-tabs"></div>
+                        <div class="editor-tabs-bar">
+                            <div id="editor-tabs" class="editor-tabs"></div>
+                            <button id="editor-save-button" class="editor-save-button" type="button" aria-label="บันทึกไฟล์ปัจจุบัน" disabled>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                    <path d="M17 21v-8H7v8"/>
+                                    <path d="M7 3v5h8"/>
+                                </svg>
+                                <span>บันทึก</span>
+                            </button>
+                        </div>
 
                         <div id="editor-panel" class="editor-panel">
                             <div id="editor-empty" class="editor-empty-state">

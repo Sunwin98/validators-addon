@@ -29,6 +29,7 @@ const UIRenderer = (() => {
         setupWorkbench();
         setupFilterButtons();
         setupNewCheckButton();
+        setupExportButton();
         openInitialFile(issues);
     }
 
@@ -355,8 +356,32 @@ const UIRenderer = (() => {
     function setupWorkbench() {
         EditorManager.init({
             fileResolver: resolveFileByPath,
-            onActiveFileChange: highlightActiveFile
+            onActiveFileChange: highlightActiveFile,
+            onFileSave: persistFileChange
         });
+    }
+
+    function setupExportButton() {
+        const exportButton = document.getElementById('btn-export');
+        if (!exportButton) return;
+
+        exportButton.onclick = async () => {
+            const appState = window.__addonInspectorState;
+            if (!appState?.packs?.length) return;
+
+            exportButton.classList.add('is-loading');
+            exportButton.disabled = true;
+
+            try {
+                await exportCurrentAddon();
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert(`ส่งออกไฟล์ไม่สำเร็จ: ${error.message}`);
+            } finally {
+                exportButton.classList.remove('is-loading');
+                exportButton.disabled = false;
+            }
+        };
     }
 
     function openInitialFile(issues) {
@@ -396,6 +421,119 @@ const UIRenderer = (() => {
         const counter = document.getElementById('problem-count');
         if (counter) {
             counter.textContent = String(count);
+        }
+    }
+
+    function persistFileChange(path, content) {
+        applyFileContent(window.__addonInspectorState?.packs || [], path, content);
+
+        const existing = fileLookup.get(path);
+        const relativePath = path.split('/').slice(1).join('/');
+        fileLookup.set(path, {
+            path,
+            name: existing?.name || relativePath.split('/').pop(),
+            content,
+            previewType: existing?.previewType || (isImageFile(relativePath) ? 'image' : 'code')
+        });
+    }
+
+    async function exportCurrentAddon() {
+        const appState = window.__addonInspectorState;
+        if (!appState?.packs?.length) {
+            throw new Error('ยังไม่มี Add-on สำหรับส่งออก');
+        }
+
+        if (!window.JSZip) {
+            throw new Error('ตัวสร้างไฟล์ส่งออกยังไม่พร้อมใช้งาน');
+        }
+
+        const packs = createExportSnapshot(appState.packs);
+        const baseName = sanitizeFileName(appState.exportBaseName || packs[0]?.name || 'addon-inspector-export');
+
+        if (packs.length === 1) {
+            const pack = packs[0];
+            const packZip = await createPackArchive(pack);
+            const blob = await packZip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+            downloadBlob(blob, `${sanitizeFileName(pack.name || baseName)}.mcpack`);
+            return;
+        }
+
+        const addonZip = new JSZip();
+        for (const pack of packs) {
+            const packZip = await createPackArchive(pack);
+            const bytes = await packZip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+            addonZip.file(`${sanitizeFileName(pack.name)}.mcpack`, bytes);
+        }
+
+        const blob = await addonZip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+        downloadBlob(blob, `${baseName}.mcaddon`);
+    }
+
+    function createExportSnapshot(packs) {
+        const snapshot = packs.map(pack => ({
+            ...pack,
+            files: new Map(pack.files),
+            manifest: pack.manifest
+        }));
+
+        for (const [path, content] of EditorManager.getModifiedFiles()) {
+            applyFileContent(snapshot, path, content);
+        }
+
+        return snapshot;
+    }
+
+    async function createPackArchive(pack) {
+        const zip = new JSZip();
+
+        for (const [path, content] of pack.files) {
+            zip.file(path, content instanceof Uint8Array ? content : String(content));
+        }
+
+        return zip;
+    }
+
+    function applyFileContent(packs, fullPath, content) {
+        const [packName, ...parts] = fullPath.split('/');
+        if (!packName || parts.length === 0) return;
+
+        const relativePath = parts.join('/');
+        const pack = packs.find(item => item.name === packName);
+        if (!pack) return;
+
+        pack.files.set(relativePath, content);
+
+        if (relativePath.endsWith('manifest.json')) {
+            const parsedManifest = tryParseJson(content);
+            if (parsedManifest) {
+                pack.manifest = parsedManifest;
+            }
+        }
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function sanitizeFileName(name) {
+        return String(name || 'addon-inspector-export')
+            .replace(/[\\/:*?"<>|]+/g, '-')
+            .replace(/\s+/g, ' ')
+            .trim() || 'addon-inspector-export';
+    }
+
+    function tryParseJson(content) {
+        try {
+            return JSON.parse(typeof content === 'string' ? content : new TextDecoder().decode(content));
+        } catch (error) {
+            return null;
         }
     }
 
