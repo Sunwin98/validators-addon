@@ -10,6 +10,7 @@ const EditorManager = (() => {
         monacoReady: null,
         fileResolver: null,
         onActiveFileChange: null,
+        onFileChange: null,
         onFileSave: null,
         previewUrls: new Set(),
         elements: null,
@@ -19,6 +20,7 @@ const EditorManager = (() => {
     function init(options = {}) {
         state.fileResolver = options.fileResolver || null;
         state.onActiveFileChange = options.onActiveFileChange || null;
+        state.onFileChange = options.onFileChange || null;
         state.onFileSave = options.onFileSave || null;
         state.elements = {
             tabs: document.getElementById('editor-tabs'),
@@ -46,7 +48,12 @@ const EditorManager = (() => {
     async function openFile(fileInfo, options = {}) {
         if (!fileInfo) return;
         if (!state.initialized) {
-            init({ fileResolver: state.fileResolver, onActiveFileChange: state.onActiveFileChange });
+            init({
+                fileResolver: state.fileResolver,
+                onActiveFileChange: state.onActiveFileChange,
+                onFileChange: state.onFileChange,
+                onFileSave: state.onFileSave
+            });
         }
 
         const monacoAvailable = await state.monacoReady;
@@ -77,6 +84,7 @@ const EditorManager = (() => {
                 tab.modified = tab.model.getValue() !== tab.originalContent;
                 renderTabs();
                 updateSaveButtonState();
+                notifyFileChange(tab);
             });
         }
 
@@ -215,6 +223,8 @@ const EditorManager = (() => {
             tab.fallbackValue = textarea.value;
             tab.modified = textarea.value !== tab.originalContent;
             renderTabs();
+            updateSaveButtonState();
+            notifyFileChange(tab);
         });
 
         state.elements.container.appendChild(textarea);
@@ -458,6 +468,13 @@ const EditorManager = (() => {
         saveButton.disabled = !canSave;
         saveButton.classList.toggle('is-active', canSave);
         saveButton.setAttribute('aria-disabled', String(!canSave));
+    }
+
+    function notifyFileChange(tab) {
+        if (typeof state.onFileChange !== 'function') return;
+
+        const content = tab.model ? tab.model.getValue() : tab.fallbackValue;
+        state.onFileChange(tab.path, content, tab);
     }
 
     function getActiveTab() {

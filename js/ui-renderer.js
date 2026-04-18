@@ -4,6 +4,7 @@
 const UIRenderer = (() => {
     let currentFilter = 'all';
     let fileLookup = new Map();
+    let validationRefreshTimer = null;
 
     const SVG_ICONS = {
         error: '<svg class="severity-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="var(--color-error)"/></svg>',
@@ -326,6 +327,7 @@ const UIRenderer = (() => {
         if (!newCheckButton) return;
 
         newCheckButton.onclick = () => {
+            clearScheduledValidationRefresh();
             document.getElementById('results-section').classList.add('hidden');
             document.getElementById('drop-section').classList.remove('hidden');
 
@@ -357,6 +359,7 @@ const UIRenderer = (() => {
         EditorManager.init({
             fileResolver: resolveFileByPath,
             onActiveFileChange: highlightActiveFile,
+            onFileChange: scheduleValidationRefresh,
             onFileSave: persistFileChange
         });
     }
@@ -435,6 +438,8 @@ const UIRenderer = (() => {
             content,
             previewType: existing?.previewType || (isImageFile(relativePath) ? 'image' : 'code')
         });
+
+        refreshValidationState();
     }
 
     async function exportCurrentAddon() {
@@ -447,7 +452,7 @@ const UIRenderer = (() => {
             throw new Error('ตัวสร้างไฟล์ส่งออกยังไม่พร้อมใช้งาน');
         }
 
-        const packs = createExportSnapshot(appState.packs);
+        const packs = createWorkingSnapshot(appState.packs);
         const baseName = sanitizeFileName(appState.exportBaseName || packs[0]?.name || 'addon-inspector-export');
 
         if (packs.length === 1) {
@@ -469,7 +474,7 @@ const UIRenderer = (() => {
         downloadBlob(blob, `${baseName}.mcaddon`);
     }
 
-    function createExportSnapshot(packs) {
+    function createWorkingSnapshot(packs) {
         const snapshot = packs.map(pack => ({
             ...pack,
             files: new Map(pack.files),
@@ -481,6 +486,74 @@ const UIRenderer = (() => {
         }
 
         return snapshot;
+    }
+
+    function scheduleValidationRefresh() {
+        const resultsSection = document.getElementById('results-section');
+        if (resultsSection?.classList.contains('hidden')) return;
+
+        clearScheduledValidationRefresh();
+        validationRefreshTimer = window.setTimeout(() => {
+            refreshValidationState();
+        }, 220);
+    }
+
+    function clearScheduledValidationRefresh() {
+        if (!validationRefreshTimer) return;
+        window.clearTimeout(validationRefreshTimer);
+        validationRefreshTimer = null;
+    }
+
+    function refreshValidationState() {
+        clearScheduledValidationRefresh();
+
+        const appState = window.__addonInspectorState;
+        if (!appState?.packs?.length) return;
+
+        const packs = createWorkingSnapshot(appState.packs);
+        const issues = collectValidationIssues(packs);
+        const fileTree = Unzipper.buildFileTree(packs);
+
+        appState.issues = issues;
+        appState.fileTree = fileTree;
+
+        renderStatusBanner(issues);
+        renderSummaryCards(issues);
+        renderFileTree(fileTree, issues);
+        renderIssueList(issues);
+        renderProblemCount(issues.length);
+        applyFilter(currentFilter);
+        highlightActiveFile(EditorManager.getActivePath());
+    }
+
+    function collectValidationIssues(packs) {
+        const issues = [];
+
+        for (const pack of packs) {
+            issues.push(...JsonSyntaxValidator.validate(pack.files, pack.name));
+        }
+
+        for (const pack of packs) {
+            issues.push(...ManifestValidator.validate(pack, packs));
+        }
+
+        issues.push(...ItemValidator.validate(packs));
+        issues.push(...TextureValidator.validate(packs));
+        issues.push(...ModelValidator.validate(packs));
+        issues.push(...AnimationValidator.validate(packs));
+
+        for (const pack of packs) {
+            issues.push(...FunctionValidator.validate(pack));
+        }
+
+        for (const pack of packs) {
+            issues.push(...ScriptValidator.validate(pack));
+        }
+
+        issues.push(...LangValidator.validate(packs));
+        issues.push(...UnusedValidator.validate(packs));
+
+        return issues;
     }
 
     async function createPackArchive(pack) {
@@ -505,9 +578,8 @@ const UIRenderer = (() => {
 
         if (relativePath.endsWith('manifest.json')) {
             const parsedManifest = tryParseJson(content);
-            if (parsedManifest) {
-                pack.manifest = parsedManifest;
-            }
+            pack.manifest = parsedManifest;
+            pack.type = inferPackType(pack);
         }
     }
 
@@ -535,6 +607,26 @@ const UIRenderer = (() => {
         } catch (error) {
             return null;
         }
+    }
+
+    function inferPackType(pack) {
+        if (pack.manifest?.modules) {
+            for (const module of pack.manifest.modules) {
+                if (module.type === 'data' || module.type === 'script') return 'BP';
+                if (module.type === 'resources') return 'RP';
+            }
+        }
+
+        const lowerName = pack.name.toLowerCase();
+        if (lowerName.includes('_bp') || lowerName.endsWith('bp')) return 'BP';
+        if (lowerName.includes('_rp') || lowerName.endsWith('rp')) return 'RP';
+
+        for (const path of pack.files.keys()) {
+            if (path.startsWith('scripts/') || path.startsWith('items/') || path.startsWith('functions/')) return 'BP';
+            if (path.startsWith('textures/') || path.startsWith('attachables/') || path.startsWith('models/')) return 'RP';
+        }
+
+        return 'unknown';
     }
 
     function buildFileLookup(packs) {
